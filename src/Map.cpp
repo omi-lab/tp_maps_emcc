@@ -19,12 +19,14 @@ struct Map::Private
   bool quitting{false};
   EmscriptenWebGLContextAttributes attributes;
   EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context{0};
+  std::string canvasID;
 
   glm::ivec2 mousePos{0,0};
 
   //################################################################################################
-  Private(Map* q_):
-    q(q_)
+  Private(Map* q_, std::string canvasID_):
+    q(q_),
+    canvasID(canvasID_)
   {
 
   }
@@ -105,15 +107,56 @@ struct Map::Private
     //}
 
     q->makeCurrent();
+    resize();
     q->paintGL();
     //EMCC_GL_SwapWindow(window);
+  }
+
+  //################################################################################################
+  static EM_BOOL resizeCallback(int eventType, const EmscriptenUiEvent* uiEvent, void* userData)
+  {
+    tpDebug() << "resizeCallback";
+    TP_UNUSED(uiEvent);
+
+    switch(eventType)
+    {
+    case EMSCRIPTEN_EVENT_RESIZE:
+    {
+      static_cast<Private*>(userData)->resize();
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }
+    return EM_FALSE;
+  }
+
+  //################################################################################################
+  void resize()
+  {
+    double width{0};
+    double height{0};
+    emscripten_get_element_css_size(canvasID.data(), &width, &height);
+
+    int w = int(width);
+    int h = int(height);
+
+    emscripten_set_canvas_element_size(canvasID.data(), w, h);
+
+    //emscripten_set_canvas_size(w, h);
+
+    //emscripten_webgl_get_drawing_buffer_size(context, &w, &h);
+    //emscripten_get_canvas_size(&w, &h, &isFullscreen);
+    q->resizeGL(w, h);
   }
 };
 
 //##################################################################################################
 Map::Map(const char* canvasID, bool enableDepthBuffer):
   tp_maps::Map(enableDepthBuffer),
-  d(new Private(this))
+  d(new Private(this, canvasID))
 {
   emscripten_webgl_init_context_attributes(&d->attributes);
   d->attributes.alpha                           = EM_TRUE;
@@ -127,7 +170,7 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
   d->attributes.majorVersion                    = 2;
   d->attributes.minorVersion                    = 0;
   d->attributes.enableExtensionsByDefault       = EM_TRUE;
-  //  EMCC_GL_SetAttribute(EMCC_GL_CONTEXT_PROFILE_MASK, EMCC_GL_CONTEXT_PROFILE_CORE);
+
   d->context = emscripten_webgl_create_context(canvasID, &d->attributes);
   if(d->context == 0)
   {
@@ -136,14 +179,19 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
     return;
   }
 
+  if(emscripten_set_resize_callback(canvasID,
+                                    d,
+                                    EM_TRUE,
+                                    Private::resizeCallback) != EMSCRIPTEN_RESULT_SUCCESS)
+  {
+    d->error = true;
+    tpWarning() << "Failed to install resize callback for: " << canvasID;
+    return;
+  }
+
   initializeGL();
 
-  {
-    int w{0};
-    int h{0};
-    emscripten_webgl_get_drawing_buffer_size(d->context, &w, &h);
-    resizeGL(w, h);
-  }
+  d->resize();
 }
 
 //##################################################################################################
