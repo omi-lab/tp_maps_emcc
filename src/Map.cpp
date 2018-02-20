@@ -115,7 +115,6 @@ struct Map::Private
   //################################################################################################
   static EM_BOOL resizeCallback(int eventType, const EmscriptenUiEvent* uiEvent, void* userData)
   {
-    tpDebug() << "resizeCallback";
     TP_UNUSED(uiEvent);
 
     switch(eventType)
