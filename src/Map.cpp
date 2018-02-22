@@ -16,7 +16,6 @@ struct Map::Private
   Map* q;
 
   bool error{false};
-  bool quitting{false};
   EmscriptenWebGLContextAttributes attributes;
   EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context{0};
   std::string canvasID;
@@ -34,94 +33,119 @@ struct Map::Private
   //################################################################################################
   void update()
   {
-    //EMCC_Event event;
-    //while(EMCC_PollEvent(&event))
-    //{
-    //  switch(event.type)
-    //  {
-    //
-    //  case EMCC_QUIT: //-----------------------------------------------------------------------------
-    //  {
-    //    quitting = true;
-    //    break;
-    //  }
-    //
-    //  case EMCC_MOUSEBUTTONDOWN: //------------------------------------------------------------------
-    //  {
-    //    tp_maps::MouseEvent e(tp_maps::MouseEventType::Press);
-    //    e.pos = {event.button.x, event.button.y};
-    //    switch (event.button.button)
-    //    {
-    //    case EMCC_BUTTON_LEFT:  e.button = tp_maps::Button::LeftButton;  break;
-    //    case EMCC_BUTTON_RIGHT: e.button = tp_maps::Button::RightButton; break;
-    //    default:               e.button = tp_maps::Button::NoButton;    break;
-    //    }
-    //    q->mouseEvent(e);
-    //    break;
-    //  }
-    //
-    //  case EMCC_MOUSEBUTTONUP: //--------------------------------------------------------------------
-    //  {
-    //    tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
-    //    e.pos = {event.button.x, event.button.y};
-    //    switch (event.button.button)
-    //    {
-    //    case EMCC_BUTTON_LEFT:  e.button = tp_maps::Button::LeftButton;  break;
-    //    case EMCC_BUTTON_RIGHT: e.button = tp_maps::Button::RightButton; break;
-    //    default:               e.button = tp_maps::Button::NoButton;    break;
-    //    }
-    //    q->mouseEvent(e);
-    //    break;
-    //  }
-    //
-    //  case EMCC_MOUSEMOTION: //----------------------------------------------------------------------
-    //  {
-    //    tp_maps::MouseEvent e(tp_maps::MouseEventType::Move);
-    //    mousePos = {event.motion.x, event.motion.y};
-    //    e.pos = mousePos;
-    //    q->mouseEvent(e);
-    //    break;
-    //  }
-    //
-    //  case EMCC_MOUSEWHEEL: //-----------------------------------------------------------------------
-    //  {
-    //    tp_maps::MouseEvent e(tp_maps::MouseEventType::Wheel);
-    //    e.pos = mousePos;
-    //    e.delta = event.wheel.y;
-    //    q->mouseEvent(e);
-    //    break;
-    //  }
-    //
-    //  case EMCC_WINDOWEVENT: //----------------------------------------------------------------------
-    //  {
-    //    if (event.window.event == EMCC_WINDOWEVENT_RESIZED)
-    //      q->resizeGL(event.window.data1, event.window.data2);
-    //    break;
-    //  }
-    //
-    //  default: //-----------------------------------------------------------------------------------
-    //  {
-    //    break;
-    //  }
-    //  }
-    //}
-
     q->makeCurrent();
     resize();
     q->paintGL();
-    //EMCC_GL_SwapWindow(window);
+  }
+
+  //################################################################################################
+  static EM_BOOL mouseCallback(int eventType, const EmscriptenMouseEvent* event, void *userData)
+  {
+    Private* d = static_cast<Private*>(userData);
+
+    switch(eventType)
+    {
+    case EMSCRIPTEN_EVENT_CLICK: //-----------------------------------------------------------------
+    {
+      break;
+    }
+    case EMSCRIPTEN_EVENT_MOUSEDOWN: //-------------------------------------------------------------
+    {
+      tp_maps::MouseEvent e(tp_maps::MouseEventType::Press);
+      e.pos = {event->targetX, event->targetY};
+
+      //0 : Left button
+      //1 : Middle button (if present)
+      //2 : Right button
+      switch (event->button)
+      {
+      case 0:  e.button = tp_maps::Button::LeftButton;  break;
+      case 2:  e.button = tp_maps::Button::RightButton; break;
+      default: e.button = tp_maps::Button::NoButton;    break;
+      }
+      d->q->mouseEvent(e);
+      break;
+    }
+    case EMSCRIPTEN_EVENT_MOUSEUP: //---------------------------------------------------------------
+    {
+      tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
+      e.pos = {event->targetX, event->targetY};
+
+      //0 : Left button
+      //1 : Middle button (if present)
+      //2 : Right button
+      switch (event->button)
+      {
+      case 0:  e.button = tp_maps::Button::LeftButton;  break;
+      case 2:  e.button = tp_maps::Button::RightButton; break;
+      default: e.button = tp_maps::Button::NoButton;    break;
+      }
+      d->q->mouseEvent(e);
+      break;
+    }
+    case EMSCRIPTEN_EVENT_DBLCLICK: //--------------------------------------------------------------
+    {
+      break;
+    }
+    case EMSCRIPTEN_EVENT_MOUSEMOVE: //-------------------------------------------------------------
+    {
+      tp_maps::MouseEvent e(tp_maps::MouseEventType::Move);
+      d->mousePos = {event->targetX, event->targetY};
+      e.pos = d->mousePos;
+      d->q->mouseEvent(e);
+      break;
+    }
+    case EMSCRIPTEN_EVENT_MOUSEENTER: //------------------------------------------------------------
+    {
+      break;
+    }
+    case EMSCRIPTEN_EVENT_MOUSELEAVE: //------------------------------------------------------------
+    {
+      break;
+    }
+
+    default: //-------------------------------------------------------------------------------------
+    {
+      break;
+    }
+    }
+    return EM_TRUE;
+  }
+
+  //################################################################################################
+  static EM_BOOL wheelCallback(int eventType, const EmscriptenWheelEvent* event, void* userData)
+  {
+    Private* d = static_cast<Private*>(userData);
+
+    switch(eventType)
+    {
+    case EMSCRIPTEN_EVENT_WHEEL: //-----------------------------------------------------------------
+    {
+      tp_maps::MouseEvent e(tp_maps::MouseEventType::Wheel);
+      e.pos = d->mousePos;
+      e.delta = -event->deltaY;
+      d->q->mouseEvent(e);
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }
+    return EM_TRUE;
   }
 
   //################################################################################################
   static EM_BOOL resizeCallback(int eventType, const EmscriptenUiEvent* uiEvent, void* userData)
   {
     TP_UNUSED(uiEvent);
+    Private* d = static_cast<Private*>(userData);
 
     switch(eventType)
     {
     case EMSCRIPTEN_EVENT_RESIZE:
     {
-      static_cast<Private*>(userData)->resize();
+      d->resize();
       break;
     }
     default:
@@ -175,6 +199,36 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
   {
     d->error = true;
     tpWarning() << "Failed to get OpenGL context for: " << canvasID;
+    return;
+  }
+
+  for(auto callback : {
+      emscripten_set_click_callback     ,
+      emscripten_set_mousedown_callback ,
+      emscripten_set_mouseup_callback   ,
+      emscripten_set_dblclick_callback  ,
+      emscripten_set_mousemove_callback ,
+      emscripten_set_mouseenter_callback,
+      emscripten_set_mouseleave_callback})
+  {
+    if(callback(canvasID,
+                d,
+                EM_TRUE,
+                Private::mouseCallback) != EMSCRIPTEN_RESULT_SUCCESS)
+    {
+      d->error = true;
+      tpWarning() << "Failed to install mouse callback for: " << canvasID;
+      return;
+    }
+  }
+
+  if(emscripten_set_wheel_callback(canvasID,
+                                   d,
+                                   EM_TRUE,
+                                   Private::wheelCallback) != EMSCRIPTEN_RESULT_SUCCESS)
+  {
+    d->error = true;
+    tpWarning() << "Failed to install wheel callback for: " << canvasID;
     return;
   }
 
