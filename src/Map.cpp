@@ -21,6 +21,7 @@ struct Map::Private
   std::string canvasID;
 
   glm::ivec2 mousePos{0,0};
+  bool pointerLock{false};
 
   //################################################################################################
   Private(Map* q_, std::string canvasID_):
@@ -38,6 +39,27 @@ struct Map::Private
     q->paintGL();
   }
 
+  ////################################################################################################
+  //static EM_BOOL pointerLockChangeCallback(int eventType,
+  //                                         const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent,
+  //                                         void* userData)
+  //{
+  //  Private* d = static_cast<Private*>(userData);
+  //  tpDebug() << "pointerLockChangeCallback";
+  //
+  //  switch(eventType)
+  //  {
+  //  case EMSCRIPTEN_EVENT_POINTERLOCKCHANGE: //-----------------------------------------------------
+  //  {
+  //    d->pointerLock = (pointerlockChangeEvent->isActive == EM_TRUE);
+  //    break;
+  //  }
+  //  default:
+  //    break;
+  //  }
+  //  return EM_TRUE;
+  //}
+
   //################################################################################################
   static EM_BOOL mouseCallback(int eventType, const EmscriptenMouseEvent* event, void *userData)
   {
@@ -52,7 +74,11 @@ struct Map::Private
     case EMSCRIPTEN_EVENT_MOUSEDOWN: //-------------------------------------------------------------
     {
       tp_maps::MouseEvent e(tp_maps::MouseEventType::Press);
-      e.pos = {event->targetX, event->targetY};
+      d->mousePos = glm::ivec2(event->targetX, event->targetY);
+      e.pos = d->mousePos;
+
+      emscripten_request_pointerlock(d->canvasID.data(), false);
+      d->pointerLock = true;
 
       //0 : Left button
       //1 : Middle button (if present)
@@ -69,7 +95,11 @@ struct Map::Private
     case EMSCRIPTEN_EVENT_MOUSEUP: //---------------------------------------------------------------
     {
       tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
-      e.pos = {event->targetX, event->targetY};
+      d->mousePos = glm::ivec2(event->targetX, event->targetY);
+      e.pos = d->mousePos;
+
+      emscripten_exit_pointerlock();
+      d->pointerLock = false;
 
       //0 : Left button
       //1 : Middle button (if present)
@@ -90,7 +120,20 @@ struct Map::Private
     case EMSCRIPTEN_EVENT_MOUSEMOVE: //-------------------------------------------------------------
     {
       tp_maps::MouseEvent e(tp_maps::MouseEventType::Move);
-      d->mousePos = {event->targetX, event->targetY};
+
+      if(d->pointerLock)
+      {
+        EmscriptenPointerlockChangeEvent pointerlockStatus;
+        if(emscripten_get_pointerlock_status(&pointerlockStatus)==EMSCRIPTEN_RESULT_SUCCESS &&
+           pointerlockStatus.isActive == EM_TRUE)
+        {
+          d->mousePos += glm::ivec2(tpBound(-10, int(event->movementX), 10),
+                                    tpBound(-10, int(event->movementY), 10));
+        }
+      }
+      else
+        d->mousePos = glm::ivec2(event->targetX, event->targetY);
+
       e.pos = d->mousePos;
       d->q->mouseEvent(e);
       break;
@@ -241,6 +284,16 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
     tpWarning() << "Failed to install resize callback for: " << canvasID;
     return;
   }
+
+  //if(emscripten_set_pointerlockchange_callback(canvasID,
+  //                                             d,
+  //                                             EM_TRUE,
+  //                                             Private::pointerLockChangeCallback) != EMSCRIPTEN_RESULT_SUCCESS)
+  //{
+  //  d->error = true;
+  //  tpWarning() << "Failed to install pointer lock callback for: " << canvasID;
+  //  return;
+  //}
 
   initializeGL();
 
