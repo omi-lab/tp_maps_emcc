@@ -28,6 +28,10 @@ public:
   //! Called to queue a refresh
   void update()override;
 
+  //################################################################################################
+  //! Call this when the window is resize (this will become protected shortly)
+  void resize();
+
 private:
   struct Private;
   Private* d;

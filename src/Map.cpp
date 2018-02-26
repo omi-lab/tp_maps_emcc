@@ -23,6 +23,8 @@ struct Map::Private
   glm::ivec2 mousePos{0,0};
   bool pointerLock{false};
 
+  bool updateRequested{true};
+
   //################################################################################################
   Private(Map* q_, std::string canvasID_):
     q(q_),
@@ -35,30 +37,8 @@ struct Map::Private
   void update()
   {
     q->makeCurrent();
-    resize();
     q->paintGL();
   }
-
-  ////################################################################################################
-  //static EM_BOOL pointerLockChangeCallback(int eventType,
-  //                                         const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent,
-  //                                         void* userData)
-  //{
-  //  Private* d = static_cast<Private*>(userData);
-  //  tpDebug() << "pointerLockChangeCallback";
-  //
-  //  switch(eventType)
-  //  {
-  //  case EMSCRIPTEN_EVENT_POINTERLOCKCHANGE: //-----------------------------------------------------
-  //  {
-  //    d->pointerLock = (pointerlockChangeEvent->isActive == EM_TRUE);
-  //    break;
-  //  }
-  //  default:
-  //    break;
-  //  }
-  //  return EM_TRUE;
-  //}
 
   //################################################################################################
   static EM_BOOL mouseCallback(int eventType, const EmscriptenMouseEvent* event, void *userData)
@@ -177,46 +157,6 @@ struct Map::Private
     }
     return EM_TRUE;
   }
-
-  //################################################################################################
-  static EM_BOOL resizeCallback(int eventType, const EmscriptenUiEvent* uiEvent, void* userData)
-  {
-    TP_UNUSED(uiEvent);
-    Private* d = static_cast<Private*>(userData);
-
-    switch(eventType)
-    {
-    case EMSCRIPTEN_EVENT_RESIZE:
-    {
-      d->resize();
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }
-    return EM_FALSE;
-  }
-
-  //################################################################################################
-  void resize()
-  {
-    double width{0};
-    double height{0};
-    emscripten_get_element_css_size(canvasID.data(), &width, &height);
-
-    int w = int(width);
-    int h = int(height);
-
-    emscripten_set_canvas_element_size(canvasID.data(), w, h);
-
-    //emscripten_set_canvas_size(w, h);
-
-    //emscripten_webgl_get_drawing_buffer_size(context, &w, &h);
-    //emscripten_get_canvas_size(&w, &h, &isFullscreen);
-    q->resizeGL(w, h);
-  }
 };
 
 //##################################################################################################
@@ -275,42 +215,28 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
     return;
   }
 
-  if(emscripten_set_resize_callback(canvasID,
-                                    d,
-                                    EM_TRUE,
-                                    Private::resizeCallback) != EMSCRIPTEN_RESULT_SUCCESS)
-  {
-    d->error = true;
-    tpWarning() << "Failed to install resize callback for: " << canvasID;
-    return;
-  }
-
-  //if(emscripten_set_pointerlockchange_callback(canvasID,
-  //                                             d,
-  //                                             EM_TRUE,
-  //                                             Private::pointerLockChangeCallback) != EMSCRIPTEN_RESULT_SUCCESS)
-  //{
-  //  d->error = true;
-  //  tpWarning() << "Failed to install pointer lock callback for: " << canvasID;
-  //  return;
-  //}
-
   initializeGL();
 
-  d->resize();
+  resize();
 }
 
 //##################################################################################################
 Map::~Map()
 {
   preDelete();
+  if(emscripten_webgl_destroy_context(d->context) != EMSCRIPTEN_RESULT_SUCCESS)
+    tpWarning() << "Failed to delete context: " << d->context;
   delete d;
 }
 
 //##################################################################################################
 void Map::processEvents()
 {
+  if(!d->updateRequested)
+    return;
+
   d->update();
+  d->updateRequested = false;
 }
 
 //##################################################################################################
@@ -326,7 +252,23 @@ void Map::makeCurrent()
 //##################################################################################################
 void Map::update()
 {
-#warning implement me
+  d->updateRequested = true;
+}
+
+//##################################################################################################
+void Map::resize()
+{
+  makeCurrent();
+  double width{0};
+  double height{0};
+  emscripten_get_element_css_size(d->canvasID.data(), &width, &height);
+
+  int w = int(width);
+  int h = int(height);
+
+  emscripten_set_canvas_element_size(d->canvasID.data(), w, h);
+
+  resizeGL(w, h);
 }
 
 }
