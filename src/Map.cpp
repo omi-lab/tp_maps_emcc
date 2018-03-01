@@ -236,7 +236,8 @@ void Map::processEvents()
     return;
 
   d->update();
-  d->updateRequested = false;
+#warning fix me
+  //d->updateRequested = false;
 }
 
 //##################################################################################################
