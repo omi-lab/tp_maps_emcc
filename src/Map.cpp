@@ -165,7 +165,7 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
   d(new Private(this, canvasID))
 {
   emscripten_webgl_init_context_attributes(&d->attributes);
-  d->attributes.alpha                           = EM_TRUE;
+  d->attributes.alpha                           = EM_FALSE;
   d->attributes.depth                           = EM_TRUE;
   d->attributes.stencil                         = EM_TRUE;
   d->attributes.antialias                       = EM_TRUE;
@@ -236,8 +236,7 @@ void Map::processEvents()
     return;
 
   d->update();
-#warning fix me
-  //d->updateRequested = false;
+  d->updateRequested = false;
 }
 
 //##################################################################################################
