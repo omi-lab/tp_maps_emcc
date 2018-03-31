@@ -95,6 +95,20 @@ struct Map::Private
     }
     case EMSCRIPTEN_EVENT_DBLCLICK: //--------------------------------------------------------------
     {
+      tp_maps::MouseEvent e(tp_maps::MouseEventType::DoubleClick);
+      //d->mousePos = glm::ivec2(event->targetX, event->targetY);
+      e.pos = d->mousePos;
+
+      //0 : Left button
+      //1 : Middle button (if present)
+      //2 : Right button
+      switch (event->button)
+      {
+      case 0:  e.button = tp_maps::Button::LeftButton;  break;
+      case 2:  e.button = tp_maps::Button::RightButton; break;
+      default: e.button = tp_maps::Button::NoButton;    break;
+      }
+      d->q->mouseEvent(e);
       break;
     }
     case EMSCRIPTEN_EVENT_MOUSEMOVE: //-------------------------------------------------------------
