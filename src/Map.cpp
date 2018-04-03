@@ -22,8 +22,12 @@ struct Map::Private
 
   glm::ivec2 mousePos{0,0};
   bool pointerLock{false};
+  bool usePointerLock{false};
 
   bool updateRequested{true};
+
+  bool isDownLeftButton {false};
+  bool isDownRightButton{false};
 
   //################################################################################################
   Private(Map* q_, std::string canvasID_):
@@ -57,17 +61,19 @@ struct Map::Private
       d->mousePos = glm::ivec2(event->targetX, event->targetY);
       e.pos = d->mousePos;
 
-      emscripten_request_pointerlock(d->canvasID.data(), false);
-      d->pointerLock = true;
-
+      if(d->usePointerLock)
+      {
+        emscripten_request_pointerlock(d->canvasID.data(), false);
+        d->pointerLock = true;
+      }
       //0 : Left button
       //1 : Middle button (if present)
       //2 : Right button
       switch (event->button)
       {
-      case 0:  e.button = tp_maps::Button::LeftButton;  break;
-      case 2:  e.button = tp_maps::Button::RightButton; break;
-      default: e.button = tp_maps::Button::NoButton;    break;
+      case 0:  e.button = tp_maps::Button::LeftButton;  d->isDownLeftButton  = true; break;
+      case 2:  e.button = tp_maps::Button::RightButton; d->isDownRightButton = true; break;
+      default: e.button = tp_maps::Button::NoButton; break;
       }
       d->q->mouseEvent(e);
       break;
@@ -78,17 +84,20 @@ struct Map::Private
       d->mousePos = glm::ivec2(event->targetX, event->targetY);
       e.pos = d->mousePos;
 
-      emscripten_exit_pointerlock();
-      d->pointerLock = false;
+      if(d->usePointerLock)
+      {
+        emscripten_exit_pointerlock();
+        d->pointerLock = false;
+      }
 
       //0 : Left button
       //1 : Middle button (if present)
       //2 : Right button
       switch (event->button)
       {
-      case 0:  e.button = tp_maps::Button::LeftButton;  break;
-      case 2:  e.button = tp_maps::Button::RightButton; break;
-      default: e.button = tp_maps::Button::NoButton;    break;
+      case 0:  e.button = tp_maps::Button::LeftButton;  d->isDownLeftButton  = false;  break;
+      case 2:  e.button = tp_maps::Button::RightButton; d->isDownRightButton = false;  break;
+      default: e.button = tp_maps::Button::NoButton; break;
       }
       d->q->mouseEvent(e);
       break;
@@ -138,6 +147,30 @@ struct Map::Private
     }
     case EMSCRIPTEN_EVENT_MOUSELEAVE: //------------------------------------------------------------
     {
+      tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
+      d->mousePos = glm::ivec2(event->targetX, event->targetY);
+      e.pos = d->mousePos;
+
+      if(d->usePointerLock)
+      {
+        emscripten_exit_pointerlock();
+        d->pointerLock = false;
+      }
+
+      if(d->isDownLeftButton  == true)
+      {
+        d->isDownLeftButton = false;
+        e.button = tp_maps::Button::LeftButton;
+        d->q->mouseEvent(e);
+      }
+
+      if(d->isDownRightButton == true)
+      {
+        d->isDownRightButton = false;
+        e.button = tp_maps::Button::RightButton;
+        d->q->mouseEvent(e);
+      }
+
       break;
     }
 
@@ -283,6 +316,12 @@ void Map::resize()
   emscripten_set_canvas_element_size(d->canvasID.data(), w, h);
 
   resizeGL(w, h);
+}
+
+//##################################################################################################
+void Map::setUsePointerLock(bool usePointerLock)
+{
+  d->usePointerLock = usePointerLock;
 }
 
 }

@@ -32,6 +32,9 @@ public:
   //! Call this when the window is resize (this will become protected shortly)
   void resize();
 
+  //################################################################################################
+  void setUsePointerLock(bool usePointerLock);
+
 private:
   struct Private;
   Private* d;
