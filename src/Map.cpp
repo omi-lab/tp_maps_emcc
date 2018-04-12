@@ -220,7 +220,7 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
   d->attributes.preserveDrawingBuffer           = EM_FALSE;
   d->attributes.preferLowPowerToHighPerformance = EM_FALSE;
   d->attributes.failIfMajorPerformanceCaveat    = EM_FALSE;
-  d->attributes.majorVersion                    = 2;
+  d->attributes.majorVersion                    = 1;
   d->attributes.minorVersion                    = 0;
   d->attributes.enableExtensionsByDefault       = EM_TRUE;
 
@@ -274,6 +274,12 @@ Map::~Map()
   if(emscripten_webgl_destroy_context(d->context) != EMSCRIPTEN_RESULT_SUCCESS)
     tpWarning() << "Failed to delete context: " << d->context;
   delete d;
+}
+
+//##################################################################################################
+const std::string& Map::canvasID()const
+{
+  return d->canvasID;
 }
 
 //##################################################################################################

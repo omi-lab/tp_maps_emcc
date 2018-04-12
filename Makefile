@@ -1,2 +1,2 @@
-include ../tdp_build/emcc/build_a.pri
+include ../tdp_build/gmake/build_a.pri
 
