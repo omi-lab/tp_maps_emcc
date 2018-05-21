@@ -204,6 +204,72 @@ struct Map::Private
     }
     return EM_TRUE;
   }
+
+  //################################################################################################
+  static EM_BOOL touchCallback(int eventType, const EmscriptenTouchEvent* touchEvent, void* userData)
+  {
+    Private* d = static_cast<Private*>(userData);
+
+    switch(eventType)
+    {
+    case EMSCRIPTEN_EVENT_TOUCHSTART: //------------------------------------------------------------
+    {
+      if(touchEvent->numTouches == 1)
+      {
+        const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
+        tp_maps::MouseEvent e(tp_maps::MouseEventType::Press);
+        d->mousePos = glm::ivec2(event->targetX, event->targetY);
+        e.pos = d->mousePos;
+        e.button = tp_maps::Button::LeftButton;
+        d->q->mouseEvent(e);
+      }
+
+      tpDebug() << "EMSCRIPTEN_EVENT_TOUCHSTART";
+      break;
+    }
+    case EMSCRIPTEN_EVENT_TOUCHEND: //--------------------------------------------------------------
+    {
+      tpDebug() << "EMSCRIPTEN_EVENT_TOUCHEND";
+
+      if(touchEvent->numTouches == 1)
+      {
+        const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
+        tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
+        d->mousePos = glm::ivec2(event->targetX, event->targetY);
+        e.pos = d->mousePos;
+        e.button = tp_maps::Button::LeftButton;
+        d->q->mouseEvent(e);
+      }
+      break;
+    }
+    case EMSCRIPTEN_EVENT_TOUCHMOVE: //-------------------------------------------------------------
+    {
+      tpDebug() << "EMSCRIPTEN_EVENT_TOUCHMOVE";
+
+      if(touchEvent->numTouches == 1)
+      {
+        const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
+        tp_maps::MouseEvent e(tp_maps::MouseEventType::Move);
+        d->mousePos = glm::ivec2(event->targetX, event->targetY);
+        e.pos = d->mousePos;
+        d->q->mouseEvent(e);
+      }
+      break;
+    }
+    case EMSCRIPTEN_EVENT_TOUCHCANCEL:
+    {
+      tpDebug() << "EMSCRIPTEN_EVENT_TOUCHCANCEL";
+      break;
+    }
+    }
+
+    tpDebug() << "touchCallback eventType:" << eventType;
+
+    tpDebug() << "numTouches:" << touchEvent->numTouches;
+
+
+    return EM_TRUE;
+  }
 };
 
 //##################################################################################################
@@ -260,6 +326,23 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
     d->error = true;
     tpWarning() << "Failed to install wheel callback for: " << canvasID;
     return;
+  }
+
+  for(auto callback : {
+      emscripten_set_touchstart_callback ,
+      emscripten_set_touchend_callback   ,
+      emscripten_set_touchmove_callback  ,
+      emscripten_set_touchcancel_callback})
+  {
+    if(callback(canvasID,
+                d,
+                EM_TRUE,
+                Private::touchCallback) != EMSCRIPTEN_RESULT_SUCCESS)
+    {
+      d->error = true;
+      tpWarning() << "Failed to install touch callback for: " << canvasID;
+      return;
+    }
   }
 
   initializeGL();
