@@ -96,7 +96,7 @@ void MapManager::exec()
 //##################################################################################################
 void* MapManager::createMap(char* canvasID)
 {
-  tp_maps_emcc::MapDetails* details = d->createMapDetails(new tp_maps_emcc::Map(canvasID));
+  tp_maps_emcc::MapDetails* details = d->createMapDetails(new tp_maps_emcc::Map(canvasID, false));
   d->maps.push_back(details);
   return details;
 }
