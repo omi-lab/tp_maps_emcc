@@ -29,6 +29,21 @@ struct Map::Private
   bool isDownLeftButton {false};
   bool isDownRightButton{false};
 
+  enum class TouchMode_lt
+  {
+    New,
+    Pan,
+    ZoomRotate,
+    Invalid
+  };
+
+  TouchMode_lt touchMode{TouchMode_lt::New};
+  glm::ivec2 touchStartPos{0,0};
+
+  glm::vec2 zoomRotateAPos{0.0f,0.0f};
+  glm::vec2 zoomRotateBPos{0.0f,0.0f};
+  float zoomRotateDist{0.0f};
+
   //################################################################################################
   Private(Map* q_, std::string canvasID_):
     q(q_),
@@ -216,57 +231,109 @@ struct Map::Private
     {
       if(touchEvent->numTouches == 1)
       {
+        d->touchMode = TouchMode_lt::New;
         const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
-        tp_maps::MouseEvent e(tp_maps::MouseEventType::Press);
         d->mousePos = glm::ivec2(event->targetX, event->targetY);
-        e.pos = d->mousePos;
-        e.button = tp_maps::Button::LeftButton;
-        d->q->mouseEvent(e);
+        d->touchStartPos = d->mousePos;
+      }
+      else if(touchEvent->numTouches == 2)
+      {
+        d->touchMode = TouchMode_lt::ZoomRotate;
+        d->zoomRotateAPos = glm::vec2(touchEvent->touches[0].targetX, touchEvent->touches[0].targetY);
+        d->zoomRotateBPos = glm::vec2(touchEvent->touches[1].targetX, touchEvent->touches[1].targetY);
+        d->zoomRotateDist = glm::length(d->zoomRotateAPos - d->zoomRotateBPos);
+
+        glm::vec2 m = d->zoomRotateBPos + ((d->zoomRotateAPos-d->zoomRotateBPos) / 2.0f);
+        d->mousePos = glm::ivec2(m.x, m.y);
+
+      }
+      else
+      {
+        d->touchMode = TouchMode_lt::Invalid;
       }
 
-      tpDebug() << "EMSCRIPTEN_EVENT_TOUCHSTART";
       break;
     }
     case EMSCRIPTEN_EVENT_TOUCHEND: //--------------------------------------------------------------
     {
-      tpDebug() << "EMSCRIPTEN_EVENT_TOUCHEND";
-
       if(touchEvent->numTouches == 1)
       {
-        const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
-        tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
-        d->mousePos = glm::ivec2(event->targetX, event->targetY);
-        e.pos = d->mousePos;
-        e.button = tp_maps::Button::LeftButton;
-        d->q->mouseEvent(e);
+        if(d->touchMode == TouchMode_lt::Pan)
+        {
+          const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
+          tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
+          d->mousePos = glm::ivec2(event->targetX, event->targetY);
+          e.pos = d->mousePos;
+          e.button = tp_maps::Button::LeftButton;
+          d->q->mouseEvent(e);
+        }
+      }
+      else
+      {
       }
       break;
     }
     case EMSCRIPTEN_EVENT_TOUCHMOVE: //-------------------------------------------------------------
     {
-      tpDebug() << "EMSCRIPTEN_EVENT_TOUCHMOVE";
-
       if(touchEvent->numTouches == 1)
       {
-        const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
-        tp_maps::MouseEvent e(tp_maps::MouseEventType::Move);
-        d->mousePos = glm::ivec2(event->targetX, event->targetY);
-        e.pos = d->mousePos;
-        d->q->mouseEvent(e);
+        if(d->touchMode == TouchMode_lt::Pan || d->touchMode == TouchMode_lt::New)
+        {
+          const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
+          d->mousePos = glm::ivec2(event->targetX, event->targetY);
+
+          if(d->touchMode == TouchMode_lt::Pan)
+          {
+            tp_maps::MouseEvent e(tp_maps::MouseEventType::Move);
+            e.pos = d->mousePos;
+            d->q->mouseEvent(e);
+          }
+          else
+          {
+            int ox = abs(d->touchStartPos.x - d->mousePos.x);
+            int oy = abs(d->touchStartPos.y - d->mousePos.y);
+            if((ox+oy) > 10)
+            {
+              d->touchMode = TouchMode_lt::Pan;
+              tp_maps::MouseEvent e(tp_maps::MouseEventType::Press);
+              e.pos = d->touchStartPos;
+              e.button = tp_maps::Button::LeftButton;
+              d->q->mouseEvent(e);
+            }
+          }
+        }
+      }
+      else if(touchEvent->numTouches == 2)
+      {
+        if(d->touchMode == TouchMode_lt::New)
+          d->touchMode = TouchMode_lt::ZoomRotate;
+
+        if(d->touchMode == TouchMode_lt::ZoomRotate)
+        {
+          glm::vec2 zoomRotateAPos = glm::vec2(touchEvent->touches[0].targetX, touchEvent->touches[0].targetY);
+          glm::vec2 zoomRotateBPos = glm::vec2(touchEvent->touches[1].targetX, touchEvent->touches[1].targetY);
+          float zoomRotateDist = glm::length(zoomRotateAPos - zoomRotateBPos);
+
+          tp_maps::MouseEvent e(tp_maps::MouseEventType::Wheel);
+          e.delta = (zoomRotateDist - d->zoomRotateDist) / 10.0f;
+          if(abs(e.delta)>1)
+          {
+            e.pos = d->mousePos;
+            d->q->mouseEvent(e);
+
+            d->zoomRotateAPos = zoomRotateAPos;
+            d->zoomRotateBPos = zoomRotateBPos;
+            d->zoomRotateDist = zoomRotateDist;
+          }
+        }
       }
       break;
     }
     case EMSCRIPTEN_EVENT_TOUCHCANCEL:
     {
-      tpDebug() << "EMSCRIPTEN_EVENT_TOUCHCANCEL";
       break;
     }
     }
-
-    tpDebug() << "touchCallback eventType:" << eventType;
-
-    tpDebug() << "numTouches:" << touchEvent->numTouches;
-
 
     return EM_TRUE;
   }
