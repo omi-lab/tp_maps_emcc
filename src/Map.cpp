@@ -1,4 +1,4 @@
-#include "tp_maps_emcc/Map.h"
+﻿#include "tp_maps_emcc/Map.h"
 
 #include "tp_maps/MouseEvent.h"
 
@@ -245,7 +245,7 @@ struct Map::Private
         d->touchMode = TouchMode_lt::New;
         const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
         d->mousePos = glm::ivec2(event->targetX, event->targetY);
-        d->touchStartPos = d->mousePos;        
+        d->touchStartPos = d->mousePos;
 
         d->firstPress = d->secondPress;
         d->secondPress = tp_utils::currentTimeMS();
@@ -291,6 +291,27 @@ struct Map::Private
             e.pos = d->mousePos;
             e.button = tp_maps::Button::LeftButton;
             d->q->mouseEvent(e);
+          }
+          else if(d->touchMode == TouchMode_lt::New)
+          {
+            if((tp_utils::currentTimeMS() - d->secondPress) < 400)
+            {
+              {
+                tp_maps::MouseEvent e(tp_maps::MouseEventType::Press);
+                e.pos = d->touchStartPos;
+                e.button = tp_maps::Button::LeftButton;
+                d->q->mouseEvent(e);
+              }
+
+              {
+                const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
+                tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
+                d->mousePos = glm::ivec2(event->targetX, event->targetY);
+                e.pos = d->mousePos;
+                e.button = tp_maps::Button::LeftButton;
+                d->q->mouseEvent(e);
+              }
+            }
           }
         }
       }
