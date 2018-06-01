@@ -3,6 +3,7 @@
 #include "tp_maps/MouseEvent.h"
 
 #include "tp_utils/DebugUtils.h"
+#include "tp_utils/TimeUtils.h"
 
 #ifdef EMSCRIPTEN
 #include <emscripten.h>
@@ -44,6 +45,9 @@ struct Map::Private
   glm::vec2 zoomRotateBPos{0.0f,0.0f};
   float zoomRotateDist{0.0f};
 
+  int64_t firstPress{0};
+  int64_t secondPress{0};
+
   //################################################################################################
   Private(Map* q_, std::string canvasID_):
     q(q_),
@@ -57,6 +61,13 @@ struct Map::Private
   {
     q->makeCurrent();
     q->paintGL();
+  }
+
+  //################################################################################################
+  void invalidateDoubleTap()
+  {
+    firstPress  = 0;
+    secondPress = 0;
   }
 
   //################################################################################################
@@ -234,22 +245,27 @@ struct Map::Private
         d->touchMode = TouchMode_lt::New;
         const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
         d->mousePos = glm::ivec2(event->targetX, event->targetY);
-        d->touchStartPos = d->mousePos;
+        d->touchStartPos = d->mousePos;        
+
+        d->firstPress = d->secondPress;
+        d->secondPress = tp_utils::currentTimeMS();
       }
       else if(touchEvent->numTouches == 2)
       {
         d->touchMode = TouchMode_lt::ZoomRotate;
+        d->invalidateDoubleTap();
+
         d->zoomRotateAPos = glm::vec2(touchEvent->touches[0].targetX, touchEvent->touches[0].targetY);
         d->zoomRotateBPos = glm::vec2(touchEvent->touches[1].targetX, touchEvent->touches[1].targetY);
         d->zoomRotateDist = glm::length(d->zoomRotateAPos - d->zoomRotateBPos);
 
         glm::vec2 m = d->zoomRotateBPos + ((d->zoomRotateAPos-d->zoomRotateBPos) / 2.0f);
         d->mousePos = glm::ivec2(m.x, m.y);
-
       }
       else
       {
         d->touchMode = TouchMode_lt::Invalid;
+        d->invalidateDoubleTap();
       }
 
       break;
@@ -267,10 +283,21 @@ struct Map::Private
           e.button = tp_maps::Button::LeftButton;
           d->q->mouseEvent(e);
         }
+        else
+        {
+          if((tp_utils::currentTimeMS() - d->firstPress) < 400)
+          {
+            tp_maps::MouseEvent e(tp_maps::MouseEventType::DoubleClick);
+            e.pos = d->mousePos;
+            e.button = tp_maps::Button::LeftButton;
+            d->q->mouseEvent(e);
+          }
+        }
       }
       else
       {
       }
+
       break;
     }
     case EMSCRIPTEN_EVENT_TOUCHMOVE: //-------------------------------------------------------------
@@ -299,6 +326,7 @@ struct Map::Private
               e.pos = d->touchStartPos;
               e.button = tp_maps::Button::LeftButton;
               d->q->mouseEvent(e);
+              d->invalidateDoubleTap();
             }
           }
         }
