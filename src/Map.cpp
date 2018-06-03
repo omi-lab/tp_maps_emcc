@@ -252,6 +252,14 @@ struct Map::Private
       }
       else if(touchEvent->numTouches == 2)
       {
+        if(d->touchMode == TouchMode_lt::Pan)
+        {
+          tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
+          e.pos = d->mousePos;
+          e.button = tp_maps::Button::LeftButton;
+          d->q->mouseEvent(e);
+        }
+
         d->touchMode = TouchMode_lt::ZoomRotate;
         d->invalidateDoubleTap();
 
