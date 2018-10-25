@@ -107,7 +107,7 @@ void MapManager::destroyMap(void* handle)
   if(handle)
   {
     MapDetails* details = (MapDetails*)handle;
-    tp_utils::removeOne(d->maps, details);
+    tpRemoveOne(d->maps, details);
     delete details;
   }
 }
