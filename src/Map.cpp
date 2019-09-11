@@ -5,7 +5,7 @@
 #include "tp_utils/DebugUtils.h"
 #include "tp_utils/TimeUtils.h"
 
-#ifdef EMSCRIPTEN
+#ifdef TDP_EMSCRIPTEN
 #include <emscripten.h>
 #include <emscripten/html5.h>
 #endif
@@ -423,18 +423,19 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
   }
 
   for(auto callback : {
-      emscripten_set_click_callback     ,
-      emscripten_set_mousedown_callback ,
-      emscripten_set_mouseup_callback   ,
-      emscripten_set_dblclick_callback  ,
-      emscripten_set_mousemove_callback ,
-      emscripten_set_mouseenter_callback,
-      emscripten_set_mouseleave_callback})
+      emscripten_set_click_callback_on_thread     ,
+      emscripten_set_mousedown_callback_on_thread ,
+      emscripten_set_mouseup_callback_on_thread   ,
+      emscripten_set_dblclick_callback_on_thread  ,
+      emscripten_set_mousemove_callback_on_thread ,
+      emscripten_set_mouseenter_callback_on_thread,
+      emscripten_set_mouseleave_callback_on_thread})
   {
     if(callback(canvasID,
                 d,
                 EM_TRUE,
-                Private::mouseCallback) != EMSCRIPTEN_RESULT_SUCCESS)
+                Private::mouseCallback,
+                EM_CALLBACK_THREAD_CONTEXT_CALLING_THREAD) != EMSCRIPTEN_RESULT_SUCCESS)
     {
       d->error = true;
       tpWarning() << "Failed to install mouse callback for: " << canvasID;
@@ -453,15 +454,16 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
   }
 
   for(auto callback : {
-      emscripten_set_touchstart_callback ,
-      emscripten_set_touchend_callback   ,
-      emscripten_set_touchmove_callback  ,
-      emscripten_set_touchcancel_callback})
+      emscripten_set_touchstart_callback_on_thread ,
+      emscripten_set_touchend_callback_on_thread   ,
+      emscripten_set_touchmove_callback_on_thread  ,
+      emscripten_set_touchcancel_callback_on_thread})
   {
     if(callback(canvasID,
                 d,
                 EM_TRUE,
-                Private::touchCallback) != EMSCRIPTEN_RESULT_SUCCESS)
+                Private::touchCallback,
+                EM_CALLBACK_THREAD_CONTEXT_CALLING_THREAD) != EMSCRIPTEN_RESULT_SUCCESS)
     {
       d->error = true;
       tpWarning() << "Failed to install touch callback for: " << canvasID;
