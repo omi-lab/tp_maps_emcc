@@ -5,7 +5,7 @@
 #include "tp_utils/DebugUtils.h"
 #include "tp_utils/TimeUtils.h"
 
-#ifdef TDP_EMSCRIPTEN
+#ifdef TP_EMSCRIPTEN
 #include <emscripten.h>
 #include <emscripten/html5.h>
 #endif
@@ -408,9 +408,11 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
   d->attributes.antialias                       = EM_TRUE;
   d->attributes.premultipliedAlpha              = EM_TRUE;
   d->attributes.preserveDrawingBuffer           = EM_FALSE;
-  d->attributes.preferLowPowerToHighPerformance = EM_FALSE;
+  //d->attributes.preferLowPowerToHighPerformance = EM_FALSE;
   d->attributes.failIfMajorPerformanceCaveat    = EM_FALSE;
-  d->attributes.majorVersion                    = 1;
+  //d->attributes.majorVersion                    = 1;
+  //d->attributes.minorVersion                    = 0;
+  d->attributes.majorVersion                    = 2;
   d->attributes.minorVersion                    = 0;
   d->attributes.enableExtensionsByDefault       = EM_TRUE;
 
