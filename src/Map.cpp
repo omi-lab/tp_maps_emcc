@@ -5,10 +5,8 @@
 #include "tp_utils/DebugUtils.h"
 #include "tp_utils/TimeUtils.h"
 
-#ifdef TP_EMSCRIPTEN
 #include <emscripten.h>
 #include <emscripten/html5.h>
-#endif
 
 namespace tp_maps_emcc
 {
@@ -55,6 +53,51 @@ struct Map::Private
   {
 
   }
+
+  //################################################################################################
+  void initializeWebGL2()
+  {
+    tpWarning() << "Trying WebGL 2.0";
+
+    attributes.alpha                           = EM_FALSE;
+    attributes.depth                           = EM_TRUE;
+    attributes.stencil                         = EM_TRUE;
+    attributes.antialias                       = EM_TRUE;
+    attributes.premultipliedAlpha              = EM_TRUE;
+    attributes.preserveDrawingBuffer           = EM_FALSE;
+    attributes.failIfMajorPerformanceCaveat    = EM_FALSE;
+    attributes.majorVersion                    = 2;
+    attributes.minorVersion                    = 0;
+    attributes.enableExtensionsByDefault       = EM_TRUE;
+
+    context = emscripten_webgl_create_context(canvasID.c_str(), &attributes);
+
+    if(context!=0)
+      q->setOpenGLProfile(tp_maps::OpenGLProfile::VERSION_300_ES);
+  }
+
+  //################################################################################################
+  void initializeWebGL1()
+  {
+    tpWarning() << "Trying WebGL 1.0";
+
+    attributes.alpha                           = EM_FALSE;
+    attributes.depth                           = EM_TRUE;
+    attributes.stencil                         = EM_TRUE;
+    attributes.antialias                       = EM_TRUE;
+    attributes.premultipliedAlpha              = EM_TRUE;
+    attributes.preserveDrawingBuffer           = EM_FALSE;
+    attributes.failIfMajorPerformanceCaveat    = EM_FALSE;
+    attributes.majorVersion                    = 1;
+    attributes.minorVersion                    = 0;
+    attributes.enableExtensionsByDefault       = EM_TRUE;
+
+    context = emscripten_webgl_create_context(canvasID.c_str(), &attributes);
+
+    if(context!=0)
+      q->setOpenGLProfile(tp_maps::OpenGLProfile::VERSION_100_ES);
+  }
+
 
   //################################################################################################
   void update()
@@ -402,21 +445,14 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
   d(new Private(this, canvasID))
 {
   emscripten_webgl_init_context_attributes(&d->attributes);
-  d->attributes.alpha                           = EM_FALSE;
-  d->attributes.depth                           = EM_TRUE;
-  d->attributes.stencil                         = EM_TRUE;
-  d->attributes.antialias                       = EM_TRUE;
-  d->attributes.premultipliedAlpha              = EM_TRUE;
-  d->attributes.preserveDrawingBuffer           = EM_FALSE;
-  //d->attributes.preferLowPowerToHighPerformance = EM_FALSE;
-  d->attributes.failIfMajorPerformanceCaveat    = EM_FALSE;
-  //d->attributes.majorVersion                    = 1;
-  //d->attributes.minorVersion                    = 0;
-  d->attributes.majorVersion                    = 2;
-  d->attributes.minorVersion                    = 0;
-  d->attributes.enableExtensionsByDefault       = EM_TRUE;
 
-  d->context = emscripten_webgl_create_context(canvasID, &d->attributes);
+  // Try to use WebGL 2.0 first
+  d->initializeWebGL2();
+
+  // If WebGL 2.0 fails try WebGL 1.0
+  if(d->context == 0)
+    d->initializeWebGL1();
+
   if(d->context == 0)
   {
     d->error = true;
