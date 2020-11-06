@@ -542,7 +542,7 @@ void Map::processEvents()
 //##################################################################################################
 void Map::makeCurrent()
 {
-  if (emscripten_webgl_make_context_current(d->context) != EMSCRIPTEN_RESULT_SUCCESS)
+  if(emscripten_webgl_make_context_current(d->context) != EMSCRIPTEN_RESULT_SUCCESS)
   {
     d->error = true;
     tpWarning() << "Failed to make current.";
