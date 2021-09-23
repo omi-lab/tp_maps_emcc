@@ -532,11 +532,18 @@ const std::string& Map::canvasID()const
 //##################################################################################################
 void Map::processEvents()
 {
-  if(!d->updateRequested)
-    return;
+  try
+  {
+    if(!d->updateRequested)
+      return;
 
-  d->update();
-  d->updateRequested = false;
+    d->update();
+    d->updateRequested = false;
+  }
+  catch (...)
+  {
+    tpWarning() << "Exception caught in Map::processEvents!";
+  }
 }
 
 //##################################################################################################
