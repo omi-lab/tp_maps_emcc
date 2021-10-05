@@ -4,6 +4,10 @@
 #include "tp_utils/DebugUtils.h"
 #include "tp_utils/TimeUtils.h"
 
+#ifdef TP_ENABLE_MUTEX_TIME
+#include "tp_utils/MutexUtils.h"
+#endif
+
 #include <emscripten.h>
 #include <emscripten/html5.h>
 
@@ -29,6 +33,10 @@ struct MapManager::Private
   std::function<MapDetails*(Map*)> createMapDetails;
   std::vector<MapDetails*> maps;
 
+#ifdef TP_ENABLE_MUTEX_TIME
+  int64_t nextSaveMutexStats{tp_utils::currentTimeMS()+60000};
+#endif
+
   //################################################################################################
   Private(std::function<MapDetails*(Map*)> createMapDetails_):
     createMapDetails(createMapDetails_)
@@ -44,6 +52,14 @@ struct MapManager::Private
     {
       details->map->animate(tp_utils::currentTimeMS());
       details->map->processEvents();
+
+#ifdef TP_ENABLE_MUTEX_TIME
+      if(auto t=tp_utils::currentTimeMS(); t>d->nextSaveMutexStats)
+      {
+        d->nextSaveMutexStats = t+60000;
+        tpWarning() << tp_utils::LockStats::takeResults();
+      }
+#endif
     }
   }
 
