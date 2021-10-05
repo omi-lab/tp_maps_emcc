@@ -29,7 +29,7 @@ public:
 
   //################################################################################################
   //! Called to queue a refresh
-  void update()override;
+  void update(tp_maps::RenderFromStage renderFromStage=tp_maps::RenderFromStage::Stage0)override;
 
   //################################################################################################
   //! Call this when the window is resized (this will become protected shortly)

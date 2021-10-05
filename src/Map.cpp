@@ -557,15 +557,16 @@ void Map::makeCurrent()
 }
 
 //##################################################################################################
-void Map::update()
+void Map::update(tp_maps::RenderFromStage renderFromStage)
 {
+  tp_maps::Map::update(renderFromStage);
   d->updateRequested = true;
 }
 
 //##################################################################################################
 void Map::resize()
 {
-  makeCurrent();
+  tp_maps_emcc::Map::makeCurrent();
   double width{0};
   double height{0};
   emscripten_get_element_css_size(d->canvasID.data(), &width, &height);

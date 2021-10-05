@@ -33,6 +33,9 @@ struct MapManager::Private
   std::function<MapDetails*(Map*)> createMapDetails;
   std::vector<MapDetails*> maps;
 
+  int64_t animateInterval{50};
+  int64_t nextAnimate{tp_utils::currentTimeMS()+animateInterval};
+
 #ifdef TP_ENABLE_MUTEX_TIME
   int64_t nextSaveMutexStats{tp_utils::currentTimeMS()+60000};
 #endif
@@ -50,7 +53,12 @@ struct MapManager::Private
     Private* d = reinterpret_cast<Private*>(opaque);
     for(MapDetails* details : d->maps)
     {
-      details->map->animate(tp_utils::currentTimeMS());
+      if(auto t=tp_utils::currentTimeMS(); t>d->nextAnimate)
+      {
+        d->nextAnimate = t+d->animateInterval;
+        details->map->animate(tp_utils::currentTimeMS());
+      }
+
       details->map->processEvents();
 
 #ifdef TP_ENABLE_MUTEX_TIME
