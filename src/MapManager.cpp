@@ -41,7 +41,7 @@ struct MapManager::Private
 #endif
 
   //################################################################################################
-  Private(std::function<MapDetails*(Map*)> createMapDetails_):
+  Private(const std::function<MapDetails*(Map*)>& createMapDetails_):
     createMapDetails(createMapDetails_)
   {
 
