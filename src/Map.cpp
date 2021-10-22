@@ -118,6 +118,11 @@ struct Map::Private
   {
     Private* d = static_cast<Private*>(userData);
 
+    tp_maps::KeyboardModifier modifiers {tp_maps::KeyboardModifier::None};
+    if(event->shiftKey) modifiers = modifiers | tp_maps::KeyboardModifier::Shift;
+    if(event-> ctrlKey) modifiers = modifiers | tp_maps::KeyboardModifier::Control;
+    if(event->  altKey) modifiers = modifiers | tp_maps::KeyboardModifier::Alt;
+
     switch(eventType)
     {
     case EMSCRIPTEN_EVENT_CLICK: //-----------------------------------------------------------------
@@ -129,6 +134,7 @@ struct Map::Private
       tp_maps::MouseEvent e(tp_maps::MouseEventType::Press);
       d->mousePos = glm::ivec2(event->targetX, event->targetY);
       e.pos = d->mousePos;
+      e.modifiers = modifiers;
 
       if(d->usePointerLock)
       {
@@ -152,6 +158,7 @@ struct Map::Private
       tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
       d->mousePos = glm::ivec2(event->targetX, event->targetY);
       e.pos = d->mousePos;
+      e.modifiers = modifiers;
 
       if(d->usePointerLock)
       {
@@ -176,6 +183,7 @@ struct Map::Private
       tp_maps::MouseEvent e(tp_maps::MouseEventType::DoubleClick);
       //d->mousePos = glm::ivec2(event->targetX, event->targetY);
       e.pos = d->mousePos;
+      e.modifiers = modifiers;
 
       //0 : Left button
       //1 : Middle button (if present)
@@ -192,6 +200,7 @@ struct Map::Private
     case EMSCRIPTEN_EVENT_MOUSEMOVE: //-------------------------------------------------------------
     {
       tp_maps::MouseEvent e(tp_maps::MouseEventType::Move);
+      e.modifiers = modifiers;
 
       if(d->pointerLock)
       {
@@ -219,6 +228,7 @@ struct Map::Private
       tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
       d->mousePos = glm::ivec2(event->targetX, event->targetY);
       e.pos = d->mousePos;
+      e.modifiers = modifiers;
 
       if(d->usePointerLock)
       {
@@ -256,6 +266,11 @@ struct Map::Private
   {
     Private* d = static_cast<Private*>(userData);
 
+    tp_maps::KeyboardModifier modifiers {tp_maps::KeyboardModifier::None};
+    // if(event->shiftKey) modifiers = modifiers | tp_maps::KeyboardModifier::Shift;
+    // if(event-> ctrlKey) modifiers = modifiers | tp_maps::KeyboardModifier::Control;
+    // if(event->  altKey) modifiers = modifiers | tp_maps::KeyboardModifier::Alt;
+
     switch(eventType)
     {
     case EMSCRIPTEN_EVENT_WHEEL: //-----------------------------------------------------------------
@@ -263,6 +278,7 @@ struct Map::Private
       tp_maps::MouseEvent e(tp_maps::MouseEventType::Wheel);
       e.pos = d->mousePos;
       e.delta = -event->deltaY;
+      e.modifiers = modifiers;
       d->q->mouseEvent(e);
       break;
     }
@@ -278,6 +294,11 @@ struct Map::Private
   static EM_BOOL touchCallback(int eventType, const EmscriptenTouchEvent* touchEvent, void* userData)
   {
     Private* d = static_cast<Private*>(userData);
+
+    tp_maps::KeyboardModifier modifiers {tp_maps::KeyboardModifier::None};
+    if(touchEvent->shiftKey) modifiers = modifiers | tp_maps::KeyboardModifier::Shift;
+    if(touchEvent-> ctrlKey) modifiers = modifiers | tp_maps::KeyboardModifier::Control;
+    if(touchEvent->  altKey) modifiers = modifiers | tp_maps::KeyboardModifier::Alt;
 
     switch(eventType)
     {
@@ -300,6 +321,7 @@ struct Map::Private
           tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
           e.pos = d->mousePos;
           e.button = tp_maps::Button::LeftButton;
+          e.modifiers = modifiers;
           d->q->mouseEvent(e);
         }
 
@@ -332,6 +354,7 @@ struct Map::Private
           d->mousePos = glm::ivec2(event->targetX, event->targetY);
           e.pos = d->mousePos;
           e.button = tp_maps::Button::LeftButton;
+          e.modifiers = modifiers;
           d->q->mouseEvent(e);
         }
         else
@@ -341,6 +364,7 @@ struct Map::Private
             tp_maps::MouseEvent e(tp_maps::MouseEventType::DoubleClick);
             e.pos = d->mousePos;
             e.button = tp_maps::Button::LeftButton;
+            e.modifiers = modifiers;
             d->q->mouseEvent(e);
           }
           else if(d->touchMode == TouchMode_lt::New)
@@ -351,6 +375,7 @@ struct Map::Private
                 tp_maps::MouseEvent e(tp_maps::MouseEventType::Press);
                 e.pos = d->touchStartPos;
                 e.button = tp_maps::Button::LeftButton;
+                e.modifiers = modifiers;
                 d->q->mouseEvent(e);
               }
 
@@ -360,6 +385,7 @@ struct Map::Private
                 d->mousePos = glm::ivec2(event->targetX, event->targetY);
                 e.pos = d->mousePos;
                 e.button = tp_maps::Button::LeftButton;
+                e.modifiers = modifiers;
                 d->q->mouseEvent(e);
               }
             }
@@ -385,6 +411,7 @@ struct Map::Private
           {
             tp_maps::MouseEvent e(tp_maps::MouseEventType::Move);
             e.pos = d->mousePos;
+            e.modifiers = modifiers;
             d->q->mouseEvent(e);
           }
           else
@@ -397,6 +424,7 @@ struct Map::Private
               tp_maps::MouseEvent e(tp_maps::MouseEventType::Press);
               e.pos = d->touchStartPos;
               e.button = tp_maps::Button::LeftButton;
+              e.modifiers = modifiers;
               d->q->mouseEvent(e);
               d->invalidateDoubleTap();
             }
@@ -415,6 +443,7 @@ struct Map::Private
           float zoomRotateDist = glm::length(zoomRotateAPos - zoomRotateBPos);
 
           tp_maps::MouseEvent e(tp_maps::MouseEventType::Wheel);
+          e.modifiers = modifiers;
           e.delta = (zoomRotateDist - d->zoomRotateDist) / 10.0f;
           if(abs(e.delta)>1)
           {
