@@ -30,6 +30,7 @@ MapDetails::~MapDetails()
 //##################################################################################################
 struct MapManager::Private
 {
+  MapManager* q;
   std::function<MapDetails*(Map*)> createMapDetails;
   std::vector<MapDetails*> maps;
 
@@ -41,7 +42,8 @@ struct MapManager::Private
 #endif
 
   //################################################################################################
-  Private(const std::function<MapDetails*(Map*)>& createMapDetails_):
+  Private(MapManager* q_, const std::function<MapDetails*(Map*)>& createMapDetails_):
+    q(q_),
     createMapDetails(createMapDetails_)
   {
 
@@ -51,14 +53,16 @@ struct MapManager::Private
   static void mainLoop(void* opaque)
   {
     Private* d = reinterpret_cast<Private*>(opaque);
-    for(MapDetails* details : d->maps)
-    {
-      if(auto t=tp_utils::currentTimeMS(); t>d->nextAnimate)
-      {
-        d->nextAnimate = t+d->animateInterval;
-        details->map->animate(tp_utils::currentTimeMS());
-      }
 
+    if(auto t=tp_utils::currentTimeMS(); t>d->nextAnimate)
+    {
+      d->nextAnimate = t+d->animateInterval;
+      d->q->animateCallbacks(t);
+      for(MapDetails* details : d->maps)
+        details->map->animate(t);
+    }
+
+    for(MapDetails* details : d->maps)
       details->map->processEvents();
 
 #ifdef TP_ENABLE_MUTEX_TIME
@@ -68,7 +72,6 @@ struct MapManager::Private
         tpWarning() << tp_utils::LockStats::takeResults();
       }
 #endif
-    }
   }
 
   //################################################################################################
@@ -96,7 +99,7 @@ struct MapManager::Private
 
 //##################################################################################################
 MapManager::MapManager(std::function<MapDetails*(Map*)> createMapDetails):
-  d(new Private(createMapDetails))
+  d(new Private(this, createMapDetails))
 {
   if(emscripten_set_resize_callback(0,
                                     d,

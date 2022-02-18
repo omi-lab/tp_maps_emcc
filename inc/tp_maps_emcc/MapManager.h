@@ -3,6 +3,8 @@
 
 #include "tp_maps_emcc/Globals.h"
 
+#include "tp_utils/CallbackCollection.h"
+
 #include <functional>
 
 namespace tp_maps_emcc
@@ -39,6 +41,9 @@ public:
 
   //################################################################################################
   void destroyMap(void* handle);
+
+  //################################################################################################
+  tp_utils::CallbackCollection<void(double)> animateCallbacks;
 
 private:
   struct Private;
