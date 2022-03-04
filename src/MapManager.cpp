@@ -50,21 +50,29 @@ struct MapManager::Private
   }
 
   //################################################################################################
-  static void mainLoop(void* opaque)
+  void animate()
   {
-    Private* d = reinterpret_cast<Private*>(opaque);
 
-    if(auto t=tp_utils::currentTimeMS(); t>d->nextAnimate)
+    if(auto t=tp_utils::currentTimeMS(); t>nextAnimate)
     {
-      d->nextAnimate = t+d->animateInterval;
-      d->q->animateCallbacks(t);
-      for(MapDetails* details : d->maps)
+      nextAnimate = t+animateInterval;
+      q->animateCallbacks(t);
+      for(MapDetails* details : maps)
         details->map->animate(t);
     }
+  }
 
-    for(MapDetails* details : d->maps)
+  //################################################################################################
+  void processEvents()
+  {
+
+    for(MapDetails* details : maps)
       details->map->processEvents();
+  }
 
+  //################################################################################################
+  void printMutexStats()
+  {
 #ifdef TP_ENABLE_MUTEX_TIME
       if(auto t=tp_utils::currentTimeMS(); t>d->nextSaveMutexStats)
       {
@@ -72,6 +80,26 @@ struct MapManager::Private
         tpWarning() << tp_utils::LockStats::takeResults();
       }
 #endif
+  }
+
+  //################################################################################################
+  static void mainLoop(void* opaque)
+  {
+    Private* d = reinterpret_cast<Private*>(opaque);
+
+    d->animate();
+    d->processEvents();
+    d->printMutexStats();
+  }
+
+  //################################################################################################
+  static void slowTimer(void* opaque)
+  {
+    emscripten_async_call(slowTimer, opaque, 5000);
+
+    Private* d = reinterpret_cast<Private*>(opaque);
+
+    d->animate();
   }
 
   //################################################################################################
@@ -117,6 +145,7 @@ MapManager::~MapManager()
 //##################################################################################################
 void MapManager::exec()
 {
+  emscripten_async_call(Private::slowTimer, d, 5000);
   emscripten_set_main_loop_arg(Private::mainLoop, d, 0, 1);
 }
 
