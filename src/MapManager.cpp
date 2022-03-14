@@ -74,7 +74,7 @@ struct MapManager::Private
   void printMutexStats()
   {
 #ifdef TP_ENABLE_MUTEX_TIME
-      if(auto t=tp_utils::currentTimeMS(); t>d->nextSaveMutexStats)
+      if(auto t=tp_utils::currentTimeMS(); t>nextSaveMutexStats)
       {
         d->nextSaveMutexStats = t+60000;
         tpWarning() << tp_utils::LockStats::takeResults();
