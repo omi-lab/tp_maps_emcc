@@ -46,6 +46,8 @@ struct Map::Private
   int64_t firstPress{0};
   int64_t secondPress{0};
 
+  std::vector<std::function<void()>> asyncCallbacks;
+
   //################################################################################################
   Private(Map* q_, std::string canvasID_):
     q(q_),
@@ -560,6 +562,10 @@ const std::string& Map::canvasID()const
 //##################################################################################################
 void Map::processEvents()
 {
+  for(const auto& callback : d->asyncCallbacks)
+    callback();
+  d->asyncCallbacks.clear();
+
   try
   {
     if(!d->updateRequested)
@@ -589,6 +595,12 @@ void Map::update(tp_maps::RenderFromStage renderFromStage)
 {
   tp_maps::Map::update(renderFromStage);
   d->updateRequested = true;
+}
+
+//##################################################################################################
+void Map::callAsync(const std::function<void()>& callback)
+{
+  d->asyncCallbacks.push_back(callback);
 }
 
 //##################################################################################################

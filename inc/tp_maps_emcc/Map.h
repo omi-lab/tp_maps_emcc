@@ -25,11 +25,14 @@ public:
   void processEvents();
 
   //################################################################################################
-  void makeCurrent()override;
+  void makeCurrent() override;
 
   //################################################################################################
   //! Called to queue a refresh
-  void update(tp_maps::RenderFromStage renderFromStage=tp_maps::RenderFromStage::Full)override;
+  void update(tp_maps::RenderFromStage renderFromStage=tp_maps::RenderFromStage::Full) override;
+
+  //################################################################################################
+  void callAsync(const std::function<void()>& callback) override;
 
   //################################################################################################
   //! Call this when the window is resized (this will become protected shortly)
