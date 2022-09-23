@@ -571,6 +571,8 @@ void Map::processEvents()
     if(!d->updateRequested)
       return;
 
+
+    tpDebug() << "update() width: " << width() << " height: " << height();
     d->update();
     d->updateRequested = false;
   }
@@ -613,6 +615,10 @@ void Map::resize()
 
   int w = int(width);
   int h = int(height);
+
+
+  tpDebug() << "canvasID: " << d->canvasID;
+  tpDebug() << "void Map::resize() w: " << w << " h: " << h;
 
   emscripten_set_canvas_element_size(d->canvasID.data(), w, h);
 
