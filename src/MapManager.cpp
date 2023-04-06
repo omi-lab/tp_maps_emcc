@@ -52,7 +52,6 @@ struct MapManager::Private
   //################################################################################################
   void animate()
   {
-
     if(auto t=tp_utils::currentTimeMS(); t>nextAnimate)
     {
       nextAnimate = t+animateInterval;
