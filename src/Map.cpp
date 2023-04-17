@@ -19,6 +19,8 @@ struct Map::Private
   EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context{0};
   std::string canvasID;
 
+  float pixelScale{1.0f};
+
   glm::ivec2 mousePos{0,0};
   bool pointerLock{false};
   bool usePointerLock{false};
@@ -445,8 +447,8 @@ struct Map::Private
 
           tp_maps::MouseEvent e(tp_maps::MouseEventType::Wheel);
           e.modifiers = modifiers;
-          e.delta = (zoomRotateDist - d->zoomRotateDist) / 10.0f;
-          if(abs(e.delta)>1)
+          e.delta = (zoomRotateDist - d->zoomRotateDist) * 5.0f;
+          if(std::abs(e.delta)>1)
           {
             e.pos = d->mousePos;
             d->q->mouseEvent(e);
@@ -604,17 +606,27 @@ void Map::callAsync(const std::function<void()>& callback)
 }
 
 //##################################################################################################
+float Map::pixelScale()
+{
+  return d->pixelScale;
+}
+
+//##################################################################################################
 void Map::resize()
 {
   tp_maps_emcc::Map::makeCurrent();
+
+  d->pixelScale = emscripten_get_device_pixel_ratio();
+
   double width{0};
   double height{0};
   emscripten_get_element_css_size(d->canvasID.data(), &width, &height);
 
-  int w = int(width);
-  int h = int(height);
+  int w = int(float(width) * d->pixelScale);
+  int h = int(float(height) * d->pixelScale);
 
   emscripten_set_canvas_element_size(d->canvasID.data(), w, h);
+  emscripten_set_element_css_size(d->canvasID.data(), width, height);
 
   resizeGL(w, h);
 }

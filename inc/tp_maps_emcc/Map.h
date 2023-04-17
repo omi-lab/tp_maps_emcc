@@ -35,6 +35,9 @@ public:
   void callAsync(const std::function<void()>& callback) override;
 
   //################################################################################################
+  float pixelScale() override;
+
+  //################################################################################################
   //! Call this when the window is resized (this will become protected shortly)
   void resize();
 
