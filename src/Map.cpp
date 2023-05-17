@@ -20,6 +20,7 @@ struct Map::Private
   std::string canvasID;
 
   float pixelScale{1.0f};
+  int pixelScaleI{1};
 
   glm::ivec2 mousePos{0,0};
   bool pointerLock{false};
@@ -135,7 +136,7 @@ struct Map::Private
     case EMSCRIPTEN_EVENT_MOUSEDOWN: //-------------------------------------------------------------
     {
       tp_maps::MouseEvent e(tp_maps::MouseEventType::Press);
-      d->mousePos = glm::ivec2(event->targetX, event->targetY);
+      d->mousePos = glm::ivec2(event->targetX, event->targetY) * d->pixelScaleI;
       e.pos = d->mousePos;
       e.modifiers = modifiers;
 
@@ -159,7 +160,7 @@ struct Map::Private
     case EMSCRIPTEN_EVENT_MOUSEUP: //---------------------------------------------------------------
     {
       tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
-      d->mousePos = glm::ivec2(event->targetX, event->targetY);
+      d->mousePos = glm::ivec2(event->targetX, event->targetY) * d->pixelScaleI;
       e.pos = d->mousePos;
       e.modifiers = modifiers;
 
@@ -211,12 +212,12 @@ struct Map::Private
         if(emscripten_get_pointerlock_status(&pointerlockStatus)==EMSCRIPTEN_RESULT_SUCCESS &&
            pointerlockStatus.isActive == EM_TRUE)
         {
-          d->mousePos += glm::ivec2(tpBound(-10, int(event->movementX), 10),
-                                    tpBound(-10, int(event->movementY), 10));
+          d->mousePos += glm::ivec2(tpBound(-10, int(event->movementX) * d->pixelScaleI, 10),
+                                    tpBound(-10, int(event->movementY) * d->pixelScaleI, 10));
         }
       }
       else
-        d->mousePos = glm::ivec2(event->targetX, event->targetY);
+        d->mousePos = glm::ivec2(event->targetX, event->targetY) * d->pixelScaleI;
 
       e.pos = d->mousePos;
       d->q->mouseEvent(e);
@@ -229,7 +230,7 @@ struct Map::Private
     case EMSCRIPTEN_EVENT_MOUSELEAVE: //------------------------------------------------------------
     {
       tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
-      d->mousePos = glm::ivec2(event->targetX, event->targetY);
+      d->mousePos = glm::ivec2(event->targetX, event->targetY) * d->pixelScaleI;
       e.pos = d->mousePos;
       e.modifiers = modifiers;
 
@@ -311,7 +312,7 @@ struct Map::Private
       {
         d->touchMode = TouchMode_lt::New;
         const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
-        d->mousePos = glm::ivec2(event->targetX, event->targetY);
+        d->mousePos = glm::ivec2(event->targetX, event->targetY) * d->pixelScaleI;
         d->touchStartPos = d->mousePos;
 
         d->firstPress = d->secondPress;
@@ -336,7 +337,7 @@ struct Map::Private
         d->zoomRotateDist = glm::length(d->zoomRotateAPos - d->zoomRotateBPos);
 
         glm::vec2 m = d->zoomRotateBPos + ((d->zoomRotateAPos-d->zoomRotateBPos) / 2.0f);
-        d->mousePos = glm::ivec2(m.x, m.y);
+        d->mousePos = glm::ivec2(m.x, m.y) * d->pixelScaleI;
       }
       else
       {
@@ -354,7 +355,7 @@ struct Map::Private
         {
           const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
           tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
-          d->mousePos = glm::ivec2(event->targetX, event->targetY);
+          d->mousePos = glm::ivec2(event->targetX, event->targetY) * d->pixelScaleI;
           e.pos = d->mousePos;
           e.button = tp_maps::Button::LeftButton;
           e.modifiers = modifiers;
@@ -385,7 +386,7 @@ struct Map::Private
               {
                 const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
                 tp_maps::MouseEvent e(tp_maps::MouseEventType::Release);
-                d->mousePos = glm::ivec2(event->targetX, event->targetY);
+                d->mousePos = glm::ivec2(event->targetX, event->targetY) * d->pixelScaleI;
                 e.pos = d->mousePos;
                 e.button = tp_maps::Button::LeftButton;
                 e.modifiers = modifiers;
@@ -408,7 +409,7 @@ struct Map::Private
         if(d->touchMode == TouchMode_lt::Pan || d->touchMode == TouchMode_lt::New)
         {
           const EmscriptenTouchPoint* event = &(touchEvent->touches[0]);
-          d->mousePos = glm::ivec2(event->targetX, event->targetY);
+          d->mousePos = glm::ivec2(event->targetX, event->targetY) * d->pixelScaleI;
 
           if(d->touchMode == TouchMode_lt::Pan)
           {
@@ -419,8 +420,8 @@ struct Map::Private
           }
           else
           {
-            int ox = abs(d->touchStartPos.x - d->mousePos.x);
-            int oy = abs(d->touchStartPos.y - d->mousePos.y);
+            int ox = std::abs(d->touchStartPos.x - d->mousePos.x);
+            int oy = std::abs(d->touchStartPos.y - d->mousePos.y);
             if((ox+oy) > 10)
             {
               d->touchMode = TouchMode_lt::Pan;
@@ -617,13 +618,17 @@ void Map::resize()
   tp_maps_emcc::Map::makeCurrent();
 
   d->pixelScale = emscripten_get_device_pixel_ratio();
+  d->pixelScaleI = int(d->pixelScale+0.5f);
+
+  if(d->pixelScaleI < 1)
+    d->pixelScaleI = 1;
 
   double width{0};
   double height{0};
   emscripten_get_element_css_size(d->canvasID.data(), &width, &height);
 
-  int w = int(float(width) * d->pixelScale);
-  int h = int(float(height) * d->pixelScale);
+  int w = int(float(width)  * d->pixelScale + 0.5f);
+  int h = int(float(height) * d->pixelScale + 0.5f);
 
   emscripten_set_canvas_element_size(d->canvasID.data(), w, h);
   emscripten_set_element_css_size(d->canvasID.data(), width, height);
