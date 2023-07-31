@@ -613,7 +613,7 @@ void Map::callAsync(const std::function<void()>& callback)
 }
 
 //##################################################################################################
-float Map::pixelScale()
+float Map::pixelScale() const
 {
   return d->pixelScale;
 }
