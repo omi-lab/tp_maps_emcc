@@ -125,7 +125,7 @@ struct MapManager::Private
 };
 
 //##################################################################################################
-MapManager::MapManager(std::function<MapDetails*(Map*)> createMapDetails):
+MapManager::MapManager(const std::function<MapDetails*(Map*)>& createMapDetails):
   d(new Private(this, createMapDetails))
 {
   if(emscripten_set_resize_callback(0,

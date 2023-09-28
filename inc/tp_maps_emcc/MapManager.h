@@ -28,7 +28,7 @@ class TP_MAPS_EMCC_SHARED_EXPORT MapManager
 {
 public:
   //################################################################################################
-  MapManager(std::function<MapDetails*(Map*)> createMapDetails);
+  MapManager(const std::function<MapDetails*(Map*)>& createMapDetails);
 
   //################################################################################################
   virtual ~MapManager();
