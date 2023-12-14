@@ -128,11 +128,7 @@ struct MapManager::Private
 MapManager::MapManager(const std::function<MapDetails*(Map*)>& createMapDetails):
   d(new Private(this, createMapDetails))
 {
-  if(emscripten_set_resize_callback(0,
-                                    d,
-                                    EM_TRUE,
-                                    Private::resizeCallback) != EMSCRIPTEN_RESULT_SUCCESS)
-    tpWarning() << "Failed to install resize callback.";
+
 }
 
 //##################################################################################################
@@ -150,7 +146,13 @@ void MapManager::exec()
 
 //##################################################################################################
 void* MapManager::createMap(const char* canvasID)
-{
+{  
+  if(emscripten_set_resize_callback(canvasID,
+                                    d,
+                                    EM_TRUE,
+                                    Private::resizeCallback) != EMSCRIPTEN_RESULT_SUCCESS)
+    tpWarning() << "Failed to install resize callback.";
+    
   tp_maps_emcc::MapDetails* details = d->createMapDetails(new tp_maps_emcc::Map(canvasID, false));
   d->maps.push_back(details);
   return details;
