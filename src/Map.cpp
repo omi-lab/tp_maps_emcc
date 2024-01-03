@@ -77,7 +77,7 @@ struct Map::Private
     context = emscripten_webgl_create_context(canvasID.c_str(), &attributes);
 
     if(context!=0)
-      q->setOpenGLProfile(tp_maps::OpenGLProfile::VERSION_300_ES);
+      q->setShaderProfile(tp_maps::ShaderProfile::GLSL_300_ES);
   }
 
   //################################################################################################
@@ -99,7 +99,7 @@ struct Map::Private
     context = emscripten_webgl_create_context(canvasID.c_str(), &attributes);
 
     if(context!=0)
-      q->setOpenGLProfile(tp_maps::OpenGLProfile::VERSION_100_ES);
+      q->setShaderProfile(tp_maps::ShaderProfile::GLSL_100_ES);
   }
 
 
