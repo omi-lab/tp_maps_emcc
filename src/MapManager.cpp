@@ -62,17 +62,6 @@ struct MapManager::Private
   }
 
   //################################################################################################
-  void setFastRender(bool fastRender)
-  {
-    for(MapDetails* details : maps)
-      details->map->setFastRender(fastRender);
-
-    if(!fastRender)
-      for(MapDetails* details : maps)
-        details->map->update(tp_maps::RenderFromStage::Full);
-  }
-  
-  //################################################################################################
   void processEvents()
   {
 
@@ -97,7 +86,6 @@ struct MapManager::Private
   {
     Private* d = reinterpret_cast<Private*>(opaque);
 
-    d->setFastRender(true);
     d->animate();
     d->processEvents();
     d->printMutexStats();
@@ -111,18 +99,6 @@ struct MapManager::Private
     Private* d = reinterpret_cast<Private*>(opaque);
 
     d->animate();
-  }
-
-  //################################################################################################
-  static void renderTimer(void* opaque)
-  {
-    emscripten_async_call(renderTimer, opaque, 1000);
-
-    Private* d = reinterpret_cast<Private*>(opaque);
-
-    d->setFastRender(false);
-    d->animate();
-    d->processEvents();
   }
 
   //################################################################################################
@@ -164,7 +140,6 @@ MapManager::~MapManager()
 //##################################################################################################
 void MapManager::exec()
 {
-  emscripten_async_call(Private::renderTimer, d, 1000);
   emscripten_async_call(Private::slowTimer, d, 5000);
   emscripten_set_main_loop_arg(Private::mainLoop, d, 0, 1);
 }
