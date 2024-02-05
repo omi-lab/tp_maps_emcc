@@ -628,27 +628,29 @@ void Map::resize()
   if(d->pixelScale<0.1f || d->pixelScale>30.0f)
     d->pixelScale = 1.0f;
 
+#if 0
+  // Debug out some of the values returned by Emscripten.
   {
     int width{0};
     int height{0};
     emscripten_get_canvas_element_size(d->canvasID.data(), &width, &height);
-    tpDebug() << "emscripten_get_canvas_element_size: width: " << width << " height: " << height;
+    tpWarning() << "emscripten_get_canvas_element_size: width: " << width << " height: " << height;
   }
 
   {
     int width{0};
     int height{0};
     emscripten_webgl_get_drawing_buffer_size(d->context, &width, &height);
-    tpDebug() << "emscripten_webgl_get_drawing_buffer_size: width: " << width << " height: " << height;
+    tpWarning() << "emscripten_webgl_get_drawing_buffer_size: width: " << width << " height: " << height;
   }
 
   {
     double width{0};
     double height{0};
     emscripten_get_element_css_size(d->canvasID.data(), &width, &height);
-    tpDebug() << "emscripten_get_element_css_size: width: " << width << " height: " << height;
+    tpWarning() << "emscripten_get_element_css_size: width: " << width << " height: " << height;
   }
-
+#endif
 
   double width{0};
   double height{0};
