@@ -586,9 +586,19 @@ void Map::processEvents()
 #ifdef OMI_PREVIEW_INTERFACE_DEBUG
   tpWarning() << "tp_maps_emcc::processEvents begin this=" << this;
 #endif
-  for(const auto& callback : d->asyncCallbacks)
+  // make a local copy because the callbacks may invoke callAsync() which adds to the end of the list
+  std::vector<std::function<void()>> asyncCallbacks;
+  asyncCallback.swap(d->asyncCallbacks);
+  for(const auto& callback : asyncCallbacks)
     callback();
-  d->asyncCallbacks.clear();
+
+#ifdef OMI_PREVIEW_INTERFACE_DEBUG
+  tpWarning() << "tp_maps_emcc::processEvents(2) this=" << this;
+#endif
+
+#ifdef OMI_PREVIEW_INTERFACE_DEBUG
+  tpWarning() << "tp_maps_emcc::processEvents(2) this=" << this;
+#endif
 
   try
   {
@@ -627,7 +637,13 @@ void Map::update(tp_maps::RenderFromStage renderFromStage)
 //##################################################################################################
 void Map::callAsync(const std::function<void()>& callback)
 {
+#ifdef OMI_PREVIEW_INTERFACE_DEBUG
+  tpWarning() << "tp_maps_emcc::callAsync begin this=" << this;
+#endif
   d->asyncCallbacks.push_back(callback);
+#ifdef OMI_PREVIEW_INTERFACE_DEBUG
+  tpWarning() << "tp_maps_emcc::callAsync end this=" << this;
+#endif
 }
 
 //##################################################################################################
