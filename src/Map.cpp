@@ -483,6 +483,9 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
   tp_maps::Map(enableDepthBuffer),
   d(new Private(this, canvasID))
 {
+#ifdef OMI_PREVIEW_INTERFACE_DEBUG
+  tpWarning() << "tp_maps_emcc::Map constructor begin this=" << this;
+#endif
   emscripten_webgl_init_context_attributes(&d->attributes);
 
   // Try to use WebGL 2.0 first
@@ -551,15 +554,24 @@ Map::Map(const char* canvasID, bool enableDepthBuffer):
   initializeGL();
 
   resize();
+#ifdef OMI_PREVIEW_INTERFACE_DEBUG
+  tpWarning() << "tp_maps_emcc::Map constructor end this=" << this;
+#endif
 }
 
 //##################################################################################################
 Map::~Map()
 {
+#ifdef OMI_PREVIEW_INTERFACE_DEBUG
+  tpWarning() << "tp_maps_emcc::Map destructor begin this=" << this;
+#endif
   preDelete();
   if(emscripten_webgl_destroy_context(d->context) != EMSCRIPTEN_RESULT_SUCCESS)
     tpWarning() << "Failed to delete context: " << d->context;
   delete d;
+#ifdef OMI_PREVIEW_INTERFACE_DEBUG
+  tpWarning() << "tp_maps_emcc::Map destructor end this=" << this;
+#endif
 }
 
 //##################################################################################################
@@ -571,6 +583,9 @@ const std::string& Map::canvasID()const
 //##################################################################################################
 void Map::processEvents()
 {
+#ifdef OMI_PREVIEW_INTERFACE_DEBUG
+  tpWarning() << "tp_maps_emcc::processEvents begin this=" << this;
+#endif
   for(const auto& callback : d->asyncCallbacks)
     callback();
   d->asyncCallbacks.clear();
@@ -585,8 +600,11 @@ void Map::processEvents()
   }
   catch (...)
   {
-    tpWarning() << "Exception caught in Map::processEvents!";
+    tpWarning() << "Exception caught in Map::processEvents(2)!";
   }
+#ifdef OMI_PREVIEW_INTERFACE_DEBUG
+  tpWarning() << "tp_maps_emcc::processEvents begin this=" << this;
+#endif
 }
 
 //##################################################################################################
