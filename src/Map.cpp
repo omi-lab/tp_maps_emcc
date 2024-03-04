@@ -586,15 +586,11 @@ void Map::processEvents()
 #ifdef OMI_PREVIEW_INTERFACE_DEBUG
   tpWarning() << "tp_maps_emcc::processEvents begin this=" << this;
 #endif
-  // make a local copy because the callbacks may invoke callAsync() which adds to the end of the list
+  // ENG-925 make a local copy because the callbacks may invoke callAsync() which adds to the end of the list
   std::vector<std::function<void()>> asyncCallbacks;
   asyncCallback.swap(d->asyncCallbacks);
   for(const auto& callback : asyncCallbacks)
     callback();
-
-#ifdef OMI_PREVIEW_INTERFACE_DEBUG
-  tpWarning() << "tp_maps_emcc::processEvents(2) this=" << this;
-#endif
 
 #ifdef OMI_PREVIEW_INTERFACE_DEBUG
   tpWarning() << "tp_maps_emcc::processEvents(2) this=" << this;
