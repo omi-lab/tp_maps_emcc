@@ -588,7 +588,7 @@ void Map::processEvents()
 #endif
   // ENG-925 make a local copy because the callbacks may invoke callAsync() which adds to the end of the list
   std::vector<std::function<void()>> asyncCallbacks;
-  asyncCallback.swap(d->asyncCallbacks);
+  asyncCallbacks.swap(d->asyncCallbacks);
   for(const auto& callback : asyncCallbacks)
     callback();
 
