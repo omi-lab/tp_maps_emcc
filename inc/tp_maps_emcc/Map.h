@@ -29,7 +29,7 @@ public:
 
   //################################################################################################
   //! Called to queue a refresh
-  void update(tp_maps::RenderFromStage renderFromStage=tp_maps::RenderFromStage::Full) override;
+  void update(tp_maps::RenderFromStage renderFromStage, const std::vector<tp_utils::StringID>& subviews) override;
 
   //################################################################################################
   void callAsync(const std::function<void()>& callback) override;

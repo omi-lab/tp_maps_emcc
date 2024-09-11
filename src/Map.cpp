@@ -602,10 +602,12 @@ void Map::makeCurrent()
 }
 
 //##################################################################################################
-void Map::update(tp_maps::RenderFromStage renderFromStage)
+void Map::update(tp_maps::RenderFromStage renderFromStage, const std::vector<tp_utils::StringID>& subviews)
 {
-  tp_maps::Map::update(renderFromStage);
-  d->updateRequested = true;
+  tp_maps::Map::update(renderFromStage, subviews);
+
+  if(tpContains(subviews, tp_maps::defaultSID()))
+    d->updateRequested = true;
 }
 
 //##################################################################################################
