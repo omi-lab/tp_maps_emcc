@@ -632,7 +632,7 @@ void Map::resize()
   if(d->pixelScale<0.1f || d->pixelScale>30.0f)
     d->pixelScale = 1.0f;
 
-#if 0
+#if 1
   // Debug out some of the values returned by Emscripten.
   {
     int width{0};
@@ -663,7 +663,7 @@ void Map::resize()
   int w = int(float(width)  * d->pixelScale + 0.5f);
   int h = int(float(height) * d->pixelScale + 0.5f);
 
-  tpWarning() << "Resize event w: " << width << " h: " << height << " scale: " << d->pixelScale;
+  tpWarning() << "Resize event w: " << width << " h: " << height << " scale: " << d->pixelScale << " canvasID: " << d->canvasID;
 
   emscripten_set_canvas_element_size(d->canvasID.data(), w, h);
   emscripten_set_element_css_size(d->canvasID.data(), width, height);
