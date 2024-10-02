@@ -64,7 +64,6 @@ struct MapManager::Private
   //################################################################################################
   void processEvents()
   {
-
     for(MapDetails* details : maps)
       details->map->processEvents();
   }
