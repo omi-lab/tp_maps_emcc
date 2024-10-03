@@ -632,7 +632,7 @@ void Map::resize()
   if(d->pixelScale<0.1f || d->pixelScale>30.0f)
     d->pixelScale = 1.0f;
 
-#if 1
+#if 0
   // Debug out some of the values returned by Emscripten.
   {
     int width{0};
