@@ -602,7 +602,7 @@ void Map::makeCurrent()
 }
 
 //##################################################################################################
-void Map::update(tp_maps::RenderFromStage renderFromStage, const std::vector<tp_utils::StringID>& subviews)
+void Map::update(const tp_maps::RenderFromStage& renderFromStage, const std::vector<tp_utils::StringID>& subviews)
 {
   tp_maps::Map::update(renderFromStage, subviews);
 
