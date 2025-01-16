@@ -34,7 +34,7 @@ struct MapManager::Private
   std::function<MapDetails*(Map*)> createMapDetails;
   std::vector<MapDetails*> maps;
 
-  int64_t animateInterval{50};
+  int64_t animateInterval{5};
   int64_t nextAnimate{tp_utils::currentTimeMS()+animateInterval};
 
 #ifdef TP_ENABLE_MUTEX_TIME
@@ -145,13 +145,13 @@ void MapManager::exec()
 
 //##################################################################################################
 void* MapManager::createMap(const char* canvasID)
-{  
+{
   if(emscripten_set_resize_callback(canvasID,
                                     d,
                                     EM_TRUE,
                                     Private::resizeCallback) != EMSCRIPTEN_RESULT_SUCCESS)
     tpWarning() << "Failed to install resize callback.";
-    
+
   tp_maps_emcc::MapDetails* details = d->createMapDetails(new tp_maps_emcc::Map(canvasID, false));
   d->maps.push_back(details);
   return details;
